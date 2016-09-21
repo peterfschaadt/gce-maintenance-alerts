@@ -19,7 +19,7 @@ for path in paths:
     if path not in sys.path:
         sys.path.append(path)
 
-# Enable this to disable any alerts
+# Enable this to disable all alerts
 TEST = False
 
 
@@ -38,7 +38,7 @@ class GCEMaintenanceAlerts():
 
         parser = argparse.ArgumentParser(description='Send alerts for GCE Maintenance Events.')
         # parser.add_argument('config', metavar='c', type='Path to the ini config file (default: working directory)')
-        parser.add_argument('--config', metavar='c', help='Path to the ini config file (default: working directory)')
+        parser.add_argument('-c', '--config', help='Path to the ini config file (default: working directory)', required=False)
 
         args = parser.parse_args()
 

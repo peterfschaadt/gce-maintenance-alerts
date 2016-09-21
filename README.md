@@ -1,4 +1,4 @@
-# Google Compute Engine Maintenance Alerts
+# Google Compute Engine VM Maintenance Alerts
 
 
 A Python service to receive email or Slack alerts when a Google Compute Engine VM is about to undergo maintenance. Requires no external dependencies, just Python.
@@ -17,10 +17,10 @@ A Python service to receive email or Slack alerts when a Google Compute Engine V
 
 1. Copy example-config.ini and edit it with your credentials and preferred settings.
 
-2. Run script (must be run on a Google Compute Engine VM to work) and pass path to config.ini file as an argument.
+2. Run script (must be run on a Google Compute Engine VM to work) and pass path to the ini config file as an argument.
 
 ```
-$ python alert_gce_maintenance.py -c /path/to/config.ini
+$ python gce_maintenance_alerts.py -c /path/to/config.ini
 ```
 
 
