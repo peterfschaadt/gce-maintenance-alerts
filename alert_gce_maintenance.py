@@ -20,6 +20,8 @@ for path in paths:
         sys.path.append(path)
 
 
+TEST = False
+
 INTERVAL = 15
 
 SEND_EMAIL = True
