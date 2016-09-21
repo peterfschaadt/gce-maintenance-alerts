@@ -31,32 +31,32 @@ These settings can be specified in the ini config file, or supplied via command 
 
 ### General
 
-gce\_project\_name = hello-world
+__gce\_project\_name__ = hello-world
 
-interval = 15 (default, in seconds)
+__interval__ = 15 (default, in seconds)
 
-alert_subject = Alert: GCE Maintenance Event (default)
+__alert_subject__ = Alert: GCE Maintenance Event (default)
 
 
 ### Email
 
-send_email = True
+__send_email__ = True
 
-email_user = user@gmail.com
+__email_user__ = user@gmail.com
 
-email_pass = p455w0rd
+__email_pass__ = p455w0rd
 
-email_to = otheruser@email.com
+__email_to__ = otheruser@email.com
 
-smtp_host = smtp.google.com (default)
+__smtp_host__ = smtp.google.com (default)
 
-smtp_port = 587 (default)
+__smtp_port__ = 587 (default)
 
 
 ### Slack
 
-send_slack = True
+__send_slack__ = True
 
-slack_url = https://hooks.slack.com/services/xxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+__slack_url__ = https://hooks.slack.com/services/xxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-slack_username = GCE Maintenance Alerts (default)
+__slack_username__ = GCE Maintenance Alerts (default)
