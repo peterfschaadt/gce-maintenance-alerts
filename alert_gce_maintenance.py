@@ -3,7 +3,7 @@ import sys
 import argparse
 import ConfigParser
 import time
-import requests
+# import requests
 import urllib3
 import socket
 import smtplib
@@ -19,36 +19,8 @@ for path in paths:
     if path not in sys.path:
         sys.path.append(path)
 
-
+# Enable this to disable any alerts
 TEST = False
-
-INTERVAL = 15
-
-SEND_EMAIL = True
-SEND_SLACK = True
-
-EMAIL_USER = 'user@gmail.com'
-EMAIL_PASS = 'p455w0rd'
-
-FROM = EMAIL_USER
-TO = 'otheruser@email.com'
-
-SMTP_HOST = 'smtp.gmail.com'
-SMTP_PORT = 587
-
-ALERT_SUBJECT = 'Alert: GCE Maintenance Event'
-
-GCE_PROJECT_NAME = 'project-name'
-
-GCE_METADATA_URL = 'http://metadata.google.internal/computeMetadata/v1/'
-GCE_METADATA_HEADERS = {'Metadata-Flavor': 'Google'}
-
-GCE_OPERATIONS_URL = 'https://console.cloud.google.com/compute/operations?project={}'.format(GCE_PROJECT_NAME)
-
-SLACK_URL = 'https://hooks.slack.com/services/xxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-SLACK_HEADERS = {'Content-type': 'application/json'}
-
-SLACK_USERNAME = 'GCE Maintenance Alerts'
 
 
 class GCEMaintenanceAlerts():
@@ -70,6 +42,7 @@ class GCEMaintenanceAlerts():
 
         args = parser.parse_args()
 
+        # Check for config file path as argument
         if args.config:
             config_file = args.config
         else:
@@ -98,13 +71,20 @@ class GCEMaintenanceAlerts():
         self.slack_url = config.get('Slack', 'slack_url')
         self.slack_username = config.get('Slack', 'slack_username')
 
+        # Other config settings
+        self.gce_metadata_url = 'http://metadata.google.internal/computeMetadata/v1/'
+        self.gce_metadata_headers = {'Metadata-Flavor': 'Google'}
+        self.gce_operations_url = 'https://console.cloud.google.com/compute/operations?project={}'.format(self.gce_project_name)
+        self.alert_message = ''
+        self.slack_headers = {'Content-type': 'application/json'}
+
 
     def check_maintenance_event(self, callback):
         """
         Check metadata URL for GCE Maintenance Event.
         """
 
-        request_url = GCE_METADATA_URL + 'instance/maintenance-event'
+        request_url = self.gce_metadata_url + 'instance/maintenance-event'
         last_maintenance_event = None
         last_etag = '0'
         hostname = socket.gethostname()
@@ -116,7 +96,7 @@ class GCEMaintenanceAlerts():
             #         'last_etag': last_etag,
             #         'wait_for_change': True
             #     },
-            #     headers=GCE_METADATA_HEADERS
+            #     headers=self.gce_metadata_headers
             # )
 
             http = urllib3.PoolManager(num_pools=1)
@@ -127,10 +107,11 @@ class GCEMaintenanceAlerts():
                     'last_etag': last_etag,
                     'wait_for_change': True
                 },
-                headers=GCE_METADATA_HEADERS
+                headers=self.gce_metadata_headers
             )
 
             # During maintenance GCE can return a 503, so retry request
+            # if request.status_code == 503:
             if request.status == 503:
                 time.sleep(1)
                 continue
@@ -177,7 +158,7 @@ class GCEMaintenanceAlerts():
 
         # Create message
         message = MIMEMultipart()
-        message['From'] = FROM
+        message['From'] = self.email_user
         message['To'] = to
         message['Subject'] = subject
         message.attach(MIMEText(text))
@@ -189,10 +170,10 @@ class GCEMaintenanceAlerts():
         mail_server.starttls()
         mail_server.ehlo()
         # Authenticate
-        mail_server.login(EMAIL_USER, EMAIL_PASS)
+        mail_server.login(self.email_user, self.email_pass)
         # Send mail
-        # mail_server.sendmail(GMAIL_USER, [to], message.as_string())
-        mail_server.sendmail(EMAIL_USER, to, message.as_string())
+        # mail_server.sendmail(self.email_user, [to], message.as_string())
+        mail_server.sendmail(self.email_user, to, message.as_string())
         mail_server.close()
 
 
@@ -208,9 +189,9 @@ class GCEMaintenanceAlerts():
                 # 'channel': '#general',
                 'username': self.slack_username,
                 'icon_emoji': ':rotating_light:',
-                'text': '{}\n<{}|View GCE Operations Log>'.format(SUBJECT, GCE_OPERATIONS_URL)
+                'text': '{}\n<{}|View GCE Operations Log>'.format(subject, url)
             },
-            headers=SLACK_HEADERS
+            headers=self.slack_headers
         )
 
 
@@ -222,18 +203,21 @@ class GCEMaintenanceAlerts():
         if event:
             print('Undergoing host maintenance: {}'.format(event))
 
-            if SEND_MAIL == True:
-                self.send_email(TO, SUBJECT, event)
+            if TEST != True:
+                if self.send_mail == True:
+                    # self.send_email(self.email_to, self.alert_subject, event)
+                    self.send_email(self.email_to, self.alert_subject, self.alert_message)
 
-            if SEND_SLACK == True:
-                self.send_slack(SUBJECT, event, SLACK_URL)
+                if self.send_slack == True:
+                    # self.send_slack(self.alert_subject, event, self.slack_url)
+                    self.send_slack(self.alert_subject, self.alert_message, self.slack_url)
         else:
             print('Finished host maintenance')
 
 
     # def main():
     #     GMA.check_maintenance_event(self, alert_maintenance_event)
-    #     time.sleep(INTERVAL)
+    #     time.sleep(self.interval)
 
 
 if __name__ == 'main':
@@ -242,5 +226,6 @@ if __name__ == 'main':
 
     while(True):
         # main()
+        # GMA.check_maintenance_event(self, self.alert_maintenance_event)
         GMA.check_maintenance_event(self, alert_maintenance_event)
-        time.sleep(INTERVAL)
+        time.sleep(self.interval)
