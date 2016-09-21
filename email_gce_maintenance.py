@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import requests
+import urllib3
 import socket
 import smtplib
 # from email.mime.text import MIMEText
@@ -76,9 +77,20 @@ class GCEMaintenanceAlerts():
         hostname = socket.gethostname()
 
         while True:
-            request = requests.get(
+            # request = requests.get(
+            #     request_url,
+            #     params={
+            #         'last_etag': last_etag,
+            #         'wait_for_change': True
+            #     },
+            #     headers=GCE_METADATA_HEADERS
+            # )
+
+            http = urllib3.PoolManager(num_pools=1)
+            request = http.request(
+                'GET',
                 request_url,
-                params={
+                fields={
                     'last_etag': last_etag,
                     'wait_for_change': True
                 },
@@ -86,35 +98,43 @@ class GCEMaintenanceAlerts():
             )
 
             # During maintenance GCE can return a 503, so retry request
-            if request.status_code == 503:
+            if request.status == 503:
                 time.sleep(1)
                 continue
-            request.raise_for_status()
+            # request.raise_for_status()
+            # except urllib3.HTTPError as e:
+            #     print 'HTTPError %r' % e
 
-            last_etag = request.headers['etag']
+            last_etag = request.headers['ETag']
 
-            if request.text == 'NONE':
+            # if request.text == 'NONE':
+            if request.data == 'NONE':
                 maintenance_event = None
             else:
                 # Possible events:
                 # MIGRATE_ON_HOST_MAINTENANCE = instance will be migrated
                 # SHUTDOWN_ON_HOST_MAINTENANCE = instance will be shut down
-                maintenance_event = request.text
+                # maintenance_event = request.text
+                maintenance_event = request.data
 
             # Check for which type of maintenance will be occurring
             if maintenance_event == 'MIGRATE_ON_HOST_MAINTENANCE':
-                msg['Subject'] = 'Urgent: GCE Maintenance Alert (migration): {}'.format(hostname)
-                maintenance_message = 'Urgent: GCE Maintenance Alert for impending instance Migration: {}'.format(hostname)
+                # msg['Subject'] = 'Urgent: GCE Maintenance Alert (migration): {}'.format(hostname)
+                self.alert_subject = 'Urgent: GCE Maintenance Alert (migration): {}'.format(hostname)
+                self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Migration: {}'.format(hostname)
             elif maintenance_event == 'SHUTDOWN_ON_HOST_MAINTENANCE':
-                msg['Subject'] = 'Urgent: GCE Maintenance Alert (shutdown): {}'.format(hostname)
-                maintenance_message = 'Urgent: GCE Maintenance Alert for impending instance Shutdown: {}'.format(hostname)
+                # msg['Subject'] = 'Urgent: GCE Maintenance Alert (shutdown): {}'.format(hostname)
+                self.alert_subject = 'Urgent: GCE Maintenance Alert (shutdown): {}'.format(hostname)
+                self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Shutdown: {}'.format(hostname)
             else:
-                msg['Subject'] = 'Urgent: GCE Maintenance Alert (unknown): {}'.format(hostname)
-                maintenance_message = 'Urgent: GCE Maintenance Alert for impending instance Maintenance: {}'.format(hostname)
+                # msg['Subject'] = 'Urgent: GCE Maintenance Alert (unknown): {}'.format(hostname)
+                self.alert_subject = 'Urgent: GCE Maintenance Alert (unknown): {}'.format(hostname)
+                self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Maintenance: {}'.format(hostname)
 
             if maintenance_event != last_maintenance_event:
                 last_maintenance_event = maintenance_event
-                callback(maintenance_event)
+                # callback(maintenance_event)
+                self.alert_maintenance_event(maintenance_event)
 
 
     def send_email(self, to, subject, text):
