@@ -1,5 +1,7 @@
 import os
 import sys
+import argparse
+import ConfigParser
 import time
 import requests
 import urllib3
@@ -29,7 +31,7 @@ EMAIL_PASS = 'p455w0rd'
 FROM = EMAIL_USER
 TO = 'otheruser@email.com'
 
-SMTP_SERVER = 'smtp.gmail.com'
+SMTP_HOST = 'smtp.gmail.com'
 SMTP_PORT = 587
 
 ALERT_SUBJECT = 'Alert: GCE Maintenance Event'
@@ -56,14 +58,43 @@ class GCEMaintenanceAlerts():
     """
 
     def __init__(self):
-        send_email = True
-        send_slack = True
+        """
+        Gather configuration settings.
+        """
 
-        self.smtp_server = 'smtp.gmail.com'
-        self.smtp_port = 587
+        parser = argparse.ArgumentParser(description='Send alerts for GCE Maintenance Events.')
+        # parser.add_argument('config', metavar='c', type='Path to the ini config file (default: working directory)')
+        parser.add_argument('--config', metavar='c', help='Path to the ini config file (default: working directory)')
 
-        self.slack_url = ''
-        self.slack_username = ''
+        args = parser.parse_args()
+
+        if args.config:
+            config_file = args.config
+        else:
+            # Default location is config.ini in script's directory
+            config_file = '{}/config.ini'.format(os.path.dirname(os.path.realpath(__file__)))
+
+        config = ConfigParser.ConfigParser
+        # Read ini file
+        config.read(config_file)
+
+        # Collect General config settings
+        self.gce_project_name = config.get('General', 'gce_project_name')
+        self.interval = config.get('General', 'interval')
+        self.alert_subject = config.get('General', 'alert_subject')
+
+        # Collect Email config settings
+        self.send_email = config.get('Email', 'send_email')
+        self.email_user = config.get('Email', 'email_user')
+        self.email_pass = config.get('Email', 'email_pass')
+        self.email_to = config.get('Email', 'email_to')
+        self.smtp_host = config.get('Email', 'smtp_host')
+        self.smtp_port = config.get('Email', 'smtp_port')
+
+        # Collect Slack config settings
+        self.send_slack = config.get('Slack', 'send_slack')
+        self.slack_url = config.get('Slack', 'slack_url')
+        self.slack_username = config.get('Slack', 'slack_username')
 
 
     def check_maintenance_event(self, callback):
@@ -150,7 +181,7 @@ class GCEMaintenanceAlerts():
         message.attach(MIMEText(text))
 
         # Connect to mail server
-        mail_server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+        mail_server = smtplib.SMTP(self.smtp_host, self.smtp_port)
         mail_server.ehlo()
         # Encrypt connection
         mail_server.starttls()
