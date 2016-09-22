@@ -3,7 +3,7 @@ import sys
 import argparse
 import ConfigParser
 import time
-# import requests
+import requests
 import urllib3
 import socket
 import smtplib
@@ -20,7 +20,8 @@ for path in paths:
         sys.path.append(path)
 
 # Enable this to disable all alerts
-TEST = False
+# TEST = False
+TEST = True
 
 
 class GCEMaintenanceAlerts():
@@ -49,7 +50,7 @@ class GCEMaintenanceAlerts():
             # Default location is config.ini in script's directory
             config_file = '{}/config.ini'.format(os.path.dirname(os.path.realpath(__file__)))
 
-        config = ConfigParser.ConfigParser
+        config = ConfigParser.ConfigParser()
         # Read ini file
         config.read(config_file)
 
@@ -121,6 +122,8 @@ class GCEMaintenanceAlerts():
 
             last_etag = request.headers['ETag']
 
+            print('Maintenance Event: ' + request.data)
+
             # if request.text == 'NONE':
             if request.data == 'NONE':
                 maintenance_event = None
@@ -156,6 +159,8 @@ class GCEMaintenanceAlerts():
         Send Email alert.
         """
 
+        print('Sending Email alert...')
+
         # Create message
         message = MIMEMultipart()
         message['From'] = self.email_user
@@ -176,11 +181,15 @@ class GCEMaintenanceAlerts():
         mail_server.sendmail(self.email_user, to, message.as_string())
         mail_server.close()
 
+        print('Sent Email alert.')
+
 
     def send_slack(self, subject, text, url):
         """
         Send Slack alert.
         """
+
+        print('Sending Slack alert...')
 
         # Send Slack channel alert
         request = requests.post(
@@ -194,6 +203,8 @@ class GCEMaintenanceAlerts():
             headers=self.slack_headers
         )
 
+        print('Sent Slack alert.')
+
 
     def alert_maintenance_event(self, event):
         """
@@ -205,10 +216,12 @@ class GCEMaintenanceAlerts():
 
             if TEST != True:
                 if self.send_mail == True:
+                    print('Trigger to send Email alert')
                     # self.send_email(self.email_to, self.alert_subject, event)
                     self.send_email(self.email_to, self.alert_subject, self.alert_message)
 
                 if self.send_slack == True:
+                    print('Trigger to send Slack alert')
                     # self.send_slack(self.alert_subject, event, self.slack_url)
                     self.send_slack(self.alert_subject, self.alert_message, self.slack_url)
         else:
@@ -216,16 +229,21 @@ class GCEMaintenanceAlerts():
 
 
     # def main():
-    #     GMA.check_maintenance_event(self, alert_maintenance_event)
+    #     GMA.check_maintenance_event(GMA.alert_maintenance_event)
     #     time.sleep(self.interval)
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
 
     GMA = GCEMaintenanceAlerts()
 
-    while(True):
-        # main()
-        # GMA.check_maintenance_event(self, self.alert_maintenance_event)
-        GMA.check_maintenance_event(self, alert_maintenance_event)
-        time.sleep(self.interval)
+    # main()
+
+    GMA.check_maintenance_event(GMA.alert_maintenance_event)
+    time.sleep(self.interval)
+
+    # while(True):
+    #     # main()
+    #     # GMA.check_maintenance_event(GMA.alert_maintenance_event)
+    #     # time.sleep(self.interval)
+    #     pass
