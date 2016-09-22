@@ -61,6 +61,10 @@ class GCEMaintenanceAlerts():
 
         # Collect Email config settings
         self.send_email = config.get('Email', 'send_email')
+        if self.send_email == 'True':
+            self.send_email = True
+        else:
+            self.send_email = False
         self.email_user = config.get('Email', 'email_user')
         self.email_pass = config.get('Email', 'email_pass')
         self.email_to = config.get('Email', 'email_to')
@@ -69,6 +73,10 @@ class GCEMaintenanceAlerts():
 
         # Collect Slack config settings
         self.send_slack = config.get('Slack', 'send_slack')
+        if self.send_email == 'True':
+            self.send_email = True
+        else:
+            self.send_email = False
         self.slack_url = config.get('Slack', 'slack_url')
         self.slack_username = config.get('Slack', 'slack_username')
 
@@ -215,7 +223,7 @@ class GCEMaintenanceAlerts():
             print('Undergoing host maintenance: {}'.format(event))
 
             if TEST != True:
-                if self.send_mail == True:
+                if self.send_email == True:
                     print('Trigger to send Email alert')
                     # self.send_email(self.email_to, self.alert_subject, event)
                     self.send_email(self.email_to, self.alert_subject, self.alert_message)
@@ -230,7 +238,7 @@ class GCEMaintenanceAlerts():
 
     # def main():
     #     GMA.check_maintenance_event(GMA.alert_maintenance_event)
-    #     time.sleep(self.interval)
+    #     time.sleep(float(self.interval))
 
 
 if __name__ == '__main__':
@@ -240,10 +248,10 @@ if __name__ == '__main__':
     # main()
 
     GMA.check_maintenance_event(GMA.alert_maintenance_event)
-    time.sleep(self.interval)
+    time.sleep(float(GMA.interval))
 
     # while(True):
     #     # main()
     #     # GMA.check_maintenance_event(GMA.alert_maintenance_event)
-    #     # time.sleep(self.interval)
+    #     # time.sleep(float(GMA.interval))
     #     pass
