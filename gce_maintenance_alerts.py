@@ -5,6 +5,7 @@ import ConfigParser
 import time
 import requests
 import urllib3
+import json
 import socket
 import smtplib
 # from email.mime.text import MIMEText
@@ -206,15 +207,17 @@ class GCEMaintenanceAlerts():
         print('Sending Slack alert...')
         subject = subject + '\n\n<{}|View GCE Operations Log>\n\n<{}|View GCE Instances>'.format(self.gce_operations_url, self.gce_instances_url)
 
+        data = json.dumps({
+            # 'channel': '#general',
+            'username': self.slack_username,
+            'icon_emoji': ':rotating_light:',
+            'text': subject
+        })
+
         # Send Slack channel alert
         request = requests.post(
             url,
-            data={
-                # 'channel': '#general',
-                'username': self.slack_username,
-                'icon_emoji': ':rotating_light:',
-                'text': subject
-            },
+            data=data,
             headers=self.slack_headers
         )
 
