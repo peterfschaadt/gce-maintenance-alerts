@@ -48,7 +48,7 @@ __email_pass__ = p455w0rd
 
 __email_to__ = otheruser@email.com
 
-__smtp_host__ = smtp.google.com (default)
+__smtp_host__ = smtp.gmail.com (default)
 
 __smtp_port__ = 587 (default)
 
