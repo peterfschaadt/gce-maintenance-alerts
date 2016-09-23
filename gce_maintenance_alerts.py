@@ -258,11 +258,9 @@ if __name__ == '__main__':
     # main()
 
     # GMA.check_maintenance_event(GMA.alert_maintenance_event)
-    # GMA.check_maintenance_event(GMA.alert_maintenance_event)
     # time.sleep(float(GMA.interval))
 
     while(True):
         # main()
         GMA.check_maintenance_event(GMA.alert_maintenance_event)
         time.sleep(float(GMA.interval))
-        # pass
