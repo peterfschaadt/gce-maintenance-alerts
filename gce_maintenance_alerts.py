@@ -8,11 +8,11 @@ import urllib3
 import json
 import socket
 import smtplib
-# from email.mime.text import MIMEText
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
 paths = [
+    # /usr/local/bin,
     '/srv'
 ]
 
@@ -21,7 +21,6 @@ for path in paths:
         sys.path.append(path)
 
 # Enable this to disable all alerts
-# TEST = False
 TEST = False
 
 
@@ -70,7 +69,7 @@ class GCEMaintenanceAlerts():
         self.email_pass = config.get('Email', 'email_pass')
         self.email_to = config.get('Email', 'email_to')
         if ',' in self.email_to:
-            self.email_to = self.email_to.split(', ')
+            self.email_to = self.email_to.strip().replace(' ', '').split(', ')
         else:
             self.email_to = [self.email_to]
         self.smtp_host = config.get('Email', 'smtp_host')
@@ -104,68 +103,70 @@ class GCEMaintenanceAlerts():
         last_etag = '0'
         hostname = socket.gethostname()
 
-        while True:
-            # request = requests.get(
-            #     request_url,
-            #     params={
-            #         'last_etag': last_etag,
-            #         'wait_for_change': True
-            #     },
-            #     headers=self.gce_metadata_headers
-            # )
+        # while True:
+        print('Making request...')
+        # request = requests.get(
+        #     request_url,
+        #     params={
+        #         'last_etag': last_etag,
+        #         'wait_for_change': True
+        #     },
+        #     headers=self.gce_metadata_headers
+        # )
 
-            http = urllib3.PoolManager(num_pools=1)
-            request = http.request(
-                'GET',
-                request_url,
-                fields={
-                    'last_etag': last_etag,
-                    'wait_for_change': True
-                },
-                headers=self.gce_metadata_headers
-            )
+        http = urllib3.PoolManager(num_pools=1)
+        request = http.request(
+            'GET',
+            request_url,
+            fields={
+                'last_etag': last_etag,
+                'wait_for_change': True
+            },
+            headers=self.gce_metadata_headers
+        )
 
-            # During maintenance GCE can return a 503, so retry request
-            # if request.status_code == 503:
-            if request.status == 503:
-                time.sleep(1)
-                continue
-            # request.raise_for_status()
-            # except urllib3.HTTPError as e:
-            #     print 'HTTPError %r' % e
+        # During maintenance GCE can return a 503, so retry request
+        # if request.status_code == 503:
+        if request.status == 503:
+            time.sleep(1)
+            # continue
+        # request.raise_for_status()
+        # except urllib3.HTTPError as e:
+        #     print 'HTTPError %r' % e
 
-            last_etag = request.headers['ETag']
+        last_etag = request.headers['ETag']
 
-            print('Maintenance Event: ' + request.data)
+        print('Maintenance Event: ' + request.data)
 
-            # if request.text == 'NONE':
-            if request.data == 'NONE':
-                maintenance_event = None
-            else:
-                # Possible events:
-                # MIGRATE_ON_HOST_MAINTENANCE = instance will be migrated
-                # SHUTDOWN_ON_HOST_MAINTENANCE = instance will be shut down
-                # maintenance_event = request.text
-                maintenance_event = request.data
+        # if request.text == 'NONE':
+        if request.data == 'NONE':
+            # maintenance_event = None
+            maintenance_event = 'MIGRATE_ON_HOST_MAINTENANCE'
+        else:
+            # Possible events:
+            # MIGRATE_ON_HOST_MAINTENANCE = instance will be migrated
+            # SHUTDOWN_ON_HOST_MAINTENANCE = instance will be shut down
+            # maintenance_event = request.text
+            maintenance_event = request.data
 
-            # Check for which type of maintenance will be occurring
-            if maintenance_event == 'MIGRATE_ON_HOST_MAINTENANCE':
-                # msg['Subject'] = 'Urgent: GCE Maintenance Alert (migration): {}'.format(hostname)
-                self.alert_subject = 'Urgent: GCE Maintenance Alert (migration): {}'.format(hostname)
-                self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Migration: {}'.format(hostname)
-            elif maintenance_event == 'SHUTDOWN_ON_HOST_MAINTENANCE':
-                # msg['Subject'] = 'Urgent: GCE Maintenance Alert (shutdown): {}'.format(hostname)
-                self.alert_subject = 'Urgent: GCE Maintenance Alert (shutdown): {}'.format(hostname)
-                self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Shutdown: {}'.format(hostname)
-            else:
-                # msg['Subject'] = 'Urgent: GCE Maintenance Alert (unknown): {}'.format(hostname)
-                self.alert_subject = 'Urgent: GCE Maintenance Alert (unknown): {}'.format(hostname)
-                self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Maintenance: {}'.format(hostname)
+        # Check for which type of maintenance will be occurring
+        if maintenance_event == 'MIGRATE_ON_HOST_MAINTENANCE':
+            # msg['Subject'] = 'Urgent: GCE Maintenance Alert (migration): {}'.format(hostname)
+            self.alert_subject = 'Urgent: GCE Maintenance Alert (migration): {}'.format(hostname)
+            self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Migration in less than 60 seconds.\n\nInstance: {}'.format(hostname)
+        elif maintenance_event == 'SHUTDOWN_ON_HOST_MAINTENANCE':
+            # msg['Subject'] = 'Urgent: GCE Maintenance Alert (shutdown): {}'.format(hostname)
+            self.alert_subject = 'Urgent: GCE Maintenance Alert (shutdown): {}'.format(hostname)
+            self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Shutdown in less than 60 seconds.\n\nInstance: {}'.format(hostname)
+        else:
+            # msg['Subject'] = 'Urgent: GCE Maintenance Alert (unknown): {}'.format(hostname)
+            self.alert_subject = 'Urgent: GCE Maintenance Alert (unknown): {}'.format(hostname)
+            self.alert_message = 'Urgent: GCE Maintenance Alert for impending instance Maintenance in less than 60 seconds.\n\nInstance: {}'.format(hostname)
 
-            if maintenance_event != last_maintenance_event:
-                last_maintenance_event = maintenance_event
-                # callback(maintenance_event)
-                self.alert_maintenance_event(maintenance_event)
+        if maintenance_event != last_maintenance_event:
+            last_maintenance_event = maintenance_event
+            callback(maintenance_event)
+            # self.alert_maintenance_event(maintenance_event)
 
 
     def send_email(self, to, subject, text):
@@ -207,17 +208,16 @@ class GCEMaintenanceAlerts():
         print('Sending Slack alert...')
         subject = subject + '\n\n<{}|View GCE Operations Log>\n\n<{}|View GCE Instances>'.format(self.gce_operations_url, self.gce_instances_url)
 
-        data = json.dumps({
-            # 'channel': '#general',
-            'username': self.slack_username,
-            'icon_emoji': ':rotating_light:',
-            'text': subject
-        })
-
         # Send Slack channel alert
         request = requests.post(
             url,
-            data=data,
+            # Make sure data is encoded as JSON
+            data=json.dumps({
+                # 'channel': '#general',
+                'username': self.slack_username,
+                'icon_emoji': ':rotating_light:',
+                'text': subject
+            }),
             headers=self.slack_headers
         )
 
@@ -257,11 +257,12 @@ if __name__ == '__main__':
 
     # main()
 
-    GMA.check_maintenance_event(GMA.alert_maintenance_event)
-    time.sleep(float(GMA.interval))
+    # GMA.check_maintenance_event(GMA.alert_maintenance_event)
+    # GMA.check_maintenance_event(GMA.alert_maintenance_event)
+    # time.sleep(float(GMA.interval))
 
-    # while(True):
-    #     # main()
-    #     # GMA.check_maintenance_event(GMA.alert_maintenance_event)
-    #     # time.sleep(float(GMA.interval))
-    #     pass
+    while(True):
+        # main()
+        GMA.check_maintenance_event(GMA.alert_maintenance_event)
+        time.sleep(float(GMA.interval))
+        # pass

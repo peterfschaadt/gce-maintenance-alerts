@@ -1,0 +1,3 @@
+requests==2.11.1
+# If Python version < 2.7.9
+urllib3[secure]

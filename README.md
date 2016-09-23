@@ -1,7 +1,7 @@
 # Google Compute Engine VM Maintenance Alerts
 
 
-A Python service to receive email or Slack alerts when a Google Compute Engine VM is about to undergo maintenance. Requires no external dependencies, just Python.
+A Python service to receive email or Slack alerts when a Google Compute Engine VM is about to undergo maintenance.
 
 
 ## Alert Types
@@ -15,9 +15,15 @@ A Python service to receive email or Slack alerts when a Google Compute Engine V
 
 ## Usage
 
-1. Copy example-config.ini and edit it with your credentials and preferred settings.
+1. Install pip dependencies:
 
-2. Run script (must be run on a Google Compute Engine VM to work) and pass path to the ini config file as an argument.
+```
+$ pip install -r requirements.txt
+```
+
+2. Copy example-config.ini and edit it with your credentials and preferred settings.
+
+3. Run script (must be run on a Google Compute Engine VM to work) and pass path to the ini config file as an argument:
 
 ```
 $ python gce_maintenance_alerts.py -c /path/to/config.ini
@@ -60,3 +66,16 @@ __send_slack__ = True
 __slack_url__ = https://hooks.slack.com/services/xxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 __slack_username__ = GCE Maintenance Alerts (default)
+
+
+### Some Python versions < 2.7.9
+
+The Slack webhook URL is https so if you receive SSL errors with "SNIMissingWarning" please try the following:
+
+```
+apt-get --reinstall install python-debian
+```
+
+```
+pip install urllib3[secure]
+```
