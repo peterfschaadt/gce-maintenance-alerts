@@ -21,7 +21,7 @@ for path in paths:
 
 # Enable this to disable all alerts
 # TEST = False
-TEST = True
+TEST = False
 
 
 class GCEMaintenanceAlerts():
@@ -68,6 +68,10 @@ class GCEMaintenanceAlerts():
         self.email_user = config.get('Email', 'email_user')
         self.email_pass = config.get('Email', 'email_pass')
         self.email_to = config.get('Email', 'email_to')
+        if ',' in self.email_to:
+            self.email_to = self.email_to.split(', ')
+        else:
+            self.email_to = [self.email_to]
         self.smtp_host = config.get('Email', 'smtp_host')
         self.smtp_port = config.get('Email', 'smtp_port')
 
@@ -84,6 +88,7 @@ class GCEMaintenanceAlerts():
         self.gce_metadata_url = 'http://metadata.google.internal/computeMetadata/v1/'
         self.gce_metadata_headers = {'Metadata-Flavor': 'Google'}
         self.gce_operations_url = 'https://console.cloud.google.com/compute/operations?project={}'.format(self.gce_project_name)
+        self.gce_instances_url = 'https://console.cloud.google.com/compute/instances?project={}'.format(self.gce_project_name)
         self.alert_message = ''
         self.slack_headers = {'Content-type': 'application/json'}
 
@@ -168,11 +173,12 @@ class GCEMaintenanceAlerts():
         """
 
         print('Sending Email alert...')
+        text = text + '\n\nView GCE Operations Log:\n{}\n\nView GCE Instances:\n{}'.format(self.gce_operations_url, self.gce_instances_url)
 
         # Create message
         message = MIMEMultipart()
         message['From'] = self.email_user
-        message['To'] = to
+        message['To'] = ', '.join(to)
         message['Subject'] = subject
         message.attach(MIMEText(text))
 
@@ -198,6 +204,7 @@ class GCEMaintenanceAlerts():
         """
 
         print('Sending Slack alert...')
+        subject = subject + '\n\n<{}|View GCE Operations Log>\n\n<{}|View GCE Instances>'.format(self.gce_operations_url, self.gce_instances_url)
 
         # Send Slack channel alert
         request = requests.post(
@@ -206,7 +213,7 @@ class GCEMaintenanceAlerts():
                 # 'channel': '#general',
                 'username': self.slack_username,
                 'icon_emoji': ':rotating_light:',
-                'text': '{}\n<{}|View GCE Operations Log>'.format(subject, url)
+                'text': subject
             },
             headers=self.slack_headers
         )
