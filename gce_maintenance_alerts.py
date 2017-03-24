@@ -11,17 +11,10 @@ import smtplib
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
-paths = [
-    # /usr/local/bin,
-    '/srv'
-]
-
-for path in paths:
-    if path not in sys.path:
-        sys.path.append(path)
 
 # Enable this to disable all alerts
-TEST = False
+DISABLE_ALERTS = False
+FAKE_MIGRATION = False
 
 
 class GCEMaintenanceAlerts():
@@ -56,14 +49,15 @@ class GCEMaintenanceAlerts():
 
         # Collect General config settings
         self.gce_project_name = config.get('General', 'gce_project_name')
-        self.interval = config.get('General', 'interval')
+        self.interval = float(config.get('General', 'interval'))
         self.alert_subject = config.get('General', 'alert_subject')
 
         # Collect Email config settings
         self.send_email = config.get('Email', 'send_email')
-        if self.send_email == 'True':
+        if self.send_email.lower() == 'true':
             self.send_email = True
         else:
+            print('Email alerts disabled')
             self.send_email = False
         self.email_user = config.get('Email', 'email_user')
         self.email_pass = config.get('Email', 'email_pass')
@@ -77,10 +71,11 @@ class GCEMaintenanceAlerts():
 
         # Collect Slack config settings
         self.send_slack = config.get('Slack', 'send_slack')
-        if self.send_email == 'True':
-            self.send_email = True
+        if self.send_slack.lower() == 'true':
+            self.send_slack = True
         else:
-            self.send_email = False
+            print('Slack alerts disabled')
+            self.send_slack = False
         self.slack_url = config.get('Slack', 'slack_url')
         self.slack_username = config.get('Slack', 'slack_username')
 
@@ -140,8 +135,11 @@ class GCEMaintenanceAlerts():
 
         # if request.text == 'NONE':
         if request.data == 'NONE':
-            # maintenance_event = None
-            maintenance_event = 'MIGRATE_ON_HOST_MAINTENANCE'
+            if FAKE_MIGRATION == False:
+                maintenance_event = None
+            else:
+                # Fake a migration
+                maintenance_event = 'MIGRATE_ON_HOST_MAINTENANCE'
         else:
             # Possible events:
             # MIGRATE_ON_HOST_MAINTENANCE = instance will be migrated
@@ -165,11 +163,11 @@ class GCEMaintenanceAlerts():
 
         if maintenance_event != last_maintenance_event:
             last_maintenance_event = maintenance_event
-            callback(maintenance_event)
-            # self.alert_maintenance_event(maintenance_event)
+            # callback(maintenance_event)
+            self.alert_maintenance_event(maintenance_event)
 
 
-    def send_email(self, to, subject, text):
+    def send_email_alert(self, to, subject, text):
         """
         Send Email alert.
         """
@@ -200,7 +198,7 @@ class GCEMaintenanceAlerts():
         print('Sent Email alert.')
 
 
-    def send_slack(self, subject, text, url):
+    def send_slack_alert(self, subject, text, url):
         """
         Send Slack alert.
         """
@@ -232,19 +230,22 @@ class GCEMaintenanceAlerts():
         if event:
             print('Undergoing host maintenance: {}'.format(event))
 
-            if TEST != True:
+            if DISABLE_ALERTS == False:
                 if self.send_email == True:
                     print('Trigger to send Email alert')
-                    # self.send_email(self.email_to, self.alert_subject, event)
-                    self.send_email(self.email_to, self.alert_subject, self.alert_message)
+                    # self.send_email_alert(self.email_to, self.alert_subject, event)
+                    self.send_email_alert(self.email_to, self.alert_subject, self.alert_message)
 
                 if self.send_slack == True:
                     print('Trigger to send Slack alert')
-                    # self.send_slack(self.alert_subject, event, self.slack_url)
-                    self.send_slack(self.alert_subject, self.alert_message, self.slack_url)
+                    # self.send_slack_alert(self.alert_subject, event, self.slack_url)
+                    self.send_slack_alert(self.alert_subject, self.alert_message, self.slack_url)
+
+            # Prevent duplicate alerts (server will reboot in 45-60 seconds anyways)
+            time.sleep(90)
+            sys.exit()
         else:
             print('Finished host maintenance')
-
 
     # def main():
     #     GMA.check_maintenance_event(GMA.alert_maintenance_event)
@@ -258,9 +259,9 @@ if __name__ == '__main__':
     # main()
 
     # GMA.check_maintenance_event(GMA.alert_maintenance_event)
-    # time.sleep(float(GMA.interval))
+    # time.sleep(GMA.interval)
 
     while(True):
         # main()
         GMA.check_maintenance_event(GMA.alert_maintenance_event)
-        time.sleep(float(GMA.interval))
+        time.sleep(GMA.interval)
