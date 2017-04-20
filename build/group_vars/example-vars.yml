@@ -3,6 +3,9 @@
 # Replace each line with the variables for the environment
 
 
+gce_alerts_path:
+  /opt/gce-maintenance-alerts
+
 ### Settings and Credentials
 
 # General Settings
@@ -47,3 +50,14 @@ slack_url:
 
 slack_username:
   GCE Maintenance Alerts
+
+# GitHub Settings
+
+github_user:
+  username
+
+github_app_token:
+  app-t0k3n
+
+github_repo_url:
+  https://{{ github_user }}:{{ github_app_token }}@github.com/peterfschaadt/gce-maintenance-alerts.git

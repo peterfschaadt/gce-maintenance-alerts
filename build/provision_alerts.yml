@@ -13,7 +13,7 @@
 ### Import variables from vars files
 
     # Include base vars for configuring environment
-    - include_vars: group_vars/vars/base_vars.yml
+    # - include_vars: group_vars/vars/base_vars.yml
 
 ### Update target environment
 
@@ -44,7 +44,7 @@
 
     - name: Create GCE maintenance alerts directory
       file:
-        path: /opt/gce-maintenance-alerts
+        path: '{{ gce_alerts_path }}'
         state: directory
         # owner: {{ vm_user }}
         # group: {{ vm_user }}
@@ -53,8 +53,8 @@
       # sudo git clone https://github.com/peterfschaadt/gce-maintenance-alerts.git {{ remote_dir_application }}
       # sudo git clone https://{{ github_user }}:{{ github_app_token }}@github.com/peterfschaadt/gce-maintenance-alerts.git {{ remote_dir_application }}
       git:
-        repo: 'https://{{ github_user }}:{{ github_app_token }}@github.com/peterfschaadt/gce-maintenance-alerts.git'
-        dest: /opt/gce-maintenance-alerts
+        repo: '{{ github_repo_url }}'
+        dest: '{{ gce_alerts_path }}'
         version: master
         accept_hostkey: True
         update: True
@@ -63,5 +63,5 @@
 
     - name: Run Ansible GCE maintenance alerts playbook
       command:
-        ansible /opt/gce-maintenance-alerts/build/provision.yml -i /opt/gce-maintenance-alerts/build/inventories/{{ vm_environment }}
+        ansible {{ gce_alerts_path }}/build/provision.yml -i {{  }}/build/inventories/{{ vm_environment }}
       ignore_errors: True
