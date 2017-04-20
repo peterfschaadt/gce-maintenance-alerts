@@ -1,0 +1,67 @@
+---
+# Playbook for provisioning GCE maintenance alerts for VM environment
+
+- name: Provision GCE maintenance alerts for VM environment
+  hosts: all
+  # connection: ssh
+  become: True
+  become_user: root
+  gather_facts: True
+
+  tasks:
+
+### Import variables from vars files
+
+    # Include base vars for configuring environment
+    - include_vars: group_vars/vars/base_vars.yml
+
+### Update target environment
+
+    - name: Update Ubuntu's repositories cache
+      # sudo apt-get update
+      apt:
+        update_cache: True
+
+    # - name: Apply updates to Ubuntu's repositories
+    #   # sudo apt-get upgrade
+    #   apt:
+    #     upgrade: full
+    #   when: docker_deploy == False
+
+    - name: Perform a distribution upgrade
+      # sudo apt-get dist-upgrade
+      apt:
+        upgrade: dist
+
+### Install dependencies on target environment
+
+    # - name: Install system requirement with apt-get - build-essential
+    #   # sudo apt-get install build-essential python-dev python-setuptools git
+    #   apt:
+    #     name: build-essential
+    #     install_recommends: True
+    #     state: present
+
+    - name: Create GCE maintenance alerts directory
+      file:
+        path: /opt/gce-maintenance-alerts
+        state: directory
+        # owner: {{ vm_user }}
+        # group: {{ vm_user }}
+
+    - name: Clone the GCE maintenance alerts Git repository
+      # sudo git clone https://github.com/peterfschaadt/gce-maintenance-alerts.git {{ remote_dir_application }}
+      # sudo git clone https://{{ github_user }}:{{ github_app_token }}@github.com/peterfschaadt/gce-maintenance-alerts.git {{ remote_dir_application }}
+      git:
+        repo: 'https://{{ github_user }}:{{ github_app_token }}@github.com/peterfschaadt/gce-maintenance-alerts.git'
+        dest: /opt/gce-maintenance-alerts
+        version: master
+        accept_hostkey: True
+        update: True
+        force: True
+      ignore_errors: True
+
+    - name: Run Ansible GCE maintenance alerts playbook
+      command:
+        ansible /opt/gce-maintenance-alerts/build/provision.yml -i /opt/gce-maintenance-alerts/build/inventories/{{ vm_environment }}
+      ignore_errors: True
