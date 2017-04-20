@@ -13,4 +13,4 @@ vault_email_pass:
 # Slack Credentials
 
 vault_slack_url:
-  'https://hooks.slack.com/services/xxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  https://hooks.slack.com/services/xxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
