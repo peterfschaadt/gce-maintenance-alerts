@@ -14,3 +14,11 @@ vault_email_pass:
 
 vault_slack_url:
   https://hooks.slack.com/services/xxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# GitHub Credentials
+
+vault_github_user:
+  username
+
+vault_github_app_token:
+  app-t0k3n

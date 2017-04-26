@@ -54,10 +54,10 @@ slack_username:
 # GitHub Settings
 
 github_user:
-  username
+  '{{ vault_github_user }}'
 
 github_app_token:
-  app-t0k3n
+  '{{ vault_github_app_token }}'
 
 github_repo_url:
   https://{{ github_user }}:{{ github_app_token }}@github.com/peterfschaadt/gce-maintenance-alerts.git
