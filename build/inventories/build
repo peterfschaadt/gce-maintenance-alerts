@@ -1,0 +1,5 @@
+[build]
+127.0.0.1 ansible_ssh_port=22 ansible_ssh_user=root ansible_sudo_pass=True
+
+[build:vars]
+local_dir_application=/opt/gce-maintenance-alerts
