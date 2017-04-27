@@ -12,9 +12,14 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
 
-# Enable this to disable all alerts
+# Enable to disable all alerts
 DISABLE_ALERTS = False
+
+# Simulate a fake migration (host maintenance)
 FAKE_MIGRATION = False
+
+# Enable to disable all logs
+DISABLE_LOGGING == True
 
 
 class GCEMaintenanceAlerts():
@@ -57,7 +62,8 @@ class GCEMaintenanceAlerts():
         if self.send_email.lower() == 'true':
             self.send_email = True
         else:
-            print('Email alerts disabled')
+            if DISABLE_LOGGING == False:
+                print('Email alerts disabled')
             self.send_email = False
         self.email_user = config.get('Email', 'email_user')
         self.email_pass = config.get('Email', 'email_pass')
@@ -74,7 +80,8 @@ class GCEMaintenanceAlerts():
         if self.send_slack.lower() == 'true':
             self.send_slack = True
         else:
-            print('Slack alerts disabled')
+            if DISABLE_LOGGING == False:
+                print('Slack alerts disabled')
             self.send_slack = False
         self.slack_url = config.get('Slack', 'slack_url')
         self.slack_username = config.get('Slack', 'slack_username')
@@ -99,7 +106,8 @@ class GCEMaintenanceAlerts():
         hostname = socket.gethostname()
 
         # while True:
-        print('Making request...')
+        if DISABLE_LOGGING == False:
+            print('Making request to check for maintenance event...')
         # request = requests.get(
         #     request_url,
         #     params={
@@ -131,7 +139,8 @@ class GCEMaintenanceAlerts():
 
         last_etag = request.headers['ETag']
 
-        print('Maintenance Event: ' + request.data)
+        if DISABLE_LOGGING == False:
+            print('Maintenance Event: ' + request.data)
 
         # if request.text == 'NONE':
         if request.data == 'NONE':
@@ -172,7 +181,8 @@ class GCEMaintenanceAlerts():
         Send Email alert.
         """
 
-        print('Sending Email alert...')
+        if DISABLE_LOGGING == False:
+            print('Sending Email alert...')
         text = text + '\n\nView GCE Operations Log:\n{}\n\nView GCE Instances:\n{}'.format(self.gce_operations_url, self.gce_instances_url)
 
         # Create message
@@ -195,7 +205,8 @@ class GCEMaintenanceAlerts():
         mail_server.sendmail(self.email_user, to, message.as_string())
         mail_server.close()
 
-        print('Sent Email alert.')
+        if DISABLE_LOGGING == False:
+            print('Sent Email alert.')
 
 
     def send_slack_alert(self, subject, text, url):
@@ -203,7 +214,8 @@ class GCEMaintenanceAlerts():
         Send Slack alert.
         """
 
-        print('Sending Slack alert...')
+        if DISABLE_LOGGING == False:
+            print('Sending Slack alert...')
         subject = subject + '\n\n<{}|View GCE Operations Log>\n\n<{}|View GCE Instances>'.format(self.gce_operations_url, self.gce_instances_url)
 
         # Send Slack channel alert
@@ -219,7 +231,8 @@ class GCEMaintenanceAlerts():
             headers=self.slack_headers
         )
 
-        print('Sent Slack alert.')
+        if DISABLE_LOGGING == False:
+            print('Sent Slack alert.')
 
 
     def alert_maintenance_event(self, event):
@@ -228,16 +241,19 @@ class GCEMaintenanceAlerts():
         """
 
         if event:
-            print('Undergoing host maintenance: {}'.format(event))
+            if DISABLE_LOGGING == False:
+                print('Undergoing host maintenance: {}'.format(event))
 
             if DISABLE_ALERTS == False:
                 if self.send_email == True:
-                    print('Trigger to send Email alert')
+                    if DISABLE_LOGGING == False:
+                        print('Trigger to send Email alert')
                     # self.send_email_alert(self.email_to, self.alert_subject, event)
                     self.send_email_alert(self.email_to, self.alert_subject, self.alert_message)
 
                 if self.send_slack == True:
-                    print('Trigger to send Slack alert')
+                    if DISABLE_LOGGING == False:
+                        print('Trigger to send Slack alert')
                     # self.send_slack_alert(self.alert_subject, event, self.slack_url)
                     self.send_slack_alert(self.alert_subject, self.alert_message, self.slack_url)
 
@@ -245,7 +261,8 @@ class GCEMaintenanceAlerts():
             time.sleep(90)
             sys.exit()
         else:
-            print('Finished host maintenance')
+            if DISABLE_LOGGING == False:
+                print('Finished host maintenance')
 
     # def main():
     #     GMA.check_maintenance_event(GMA.alert_maintenance_event)
