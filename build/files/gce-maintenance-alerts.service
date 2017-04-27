@@ -8,7 +8,7 @@ PrivateTmp=yes
 PermissionsStartOnly=true
 PIDFile=/var/run/gce-maintenance-alerts.pid
 ExecStartPre=/bin/mkdir -p /opt/gce-maintenance-alerts
-ExecStart=/usr/bin/python gce_maintenance_alerts.py -c /opt/gce-maintenance-alerts/config.ini
+ExecStart=/usr/bin/python /opt/gce-maintenance-alerts/gce_maintenance_alerts.py -c /opt/gce-maintenance-alerts/config.ini
 ExecStop=/bin/kill -INT $MAINPID
 Restart=on-abort
 

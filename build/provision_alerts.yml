@@ -17,10 +17,10 @@
 
 ### Update target environment
 
-    - name: Update Ubuntu's repositories cache
-      # sudo apt-get update
-      apt:
-        update_cache: True
+    # - name: Update Ubuntu's repositories cache
+    #   # sudo apt-get update
+    #   apt:
+    #     update_cache: True
 
     # - name: Apply updates to Ubuntu's repositories
     #   # sudo apt-get upgrade
@@ -28,12 +28,12 @@
     #     upgrade: full
     #   when: docker_deploy == False
 
-    - name: Perform a distribution upgrade
-      # sudo apt-get dist-upgrade
-      apt:
-        upgrade: dist
+    # - name: Perform a distribution upgrade
+    #   # sudo apt-get dist-upgrade
+    #   apt:
+    #     upgrade: dist
 
-### Install dependencies on target environment
+### Configure GCE maintenance alerts
 
     # - name: Install system requirement with apt-get - build-essential
     #   # sudo apt-get install build-essential python-dev python-setuptools git
@@ -42,12 +42,19 @@
     #     install_recommends: True
     #     state: present
 
+    - name: Install system requirement with apt-get - git
+      # sudo apt-get install git
+      apt:
+        name: git
+        install_recommends: True
+        state: present
+
     - name: Create GCE maintenance alerts directory
       file:
         path: '{{ gce_alerts_path }}'
         state: directory
-        # owner: {{ vm_user }}
-        # group: {{ vm_user }}
+        # owner: deployer
+        # group: deployer
 
     - name: Clone the GCE maintenance alerts Git repository
       # sudo git clone https://github.com/peterfschaadt/gce-maintenance-alerts.git {{ remote_dir_application }}
@@ -61,7 +68,36 @@
         force: True
       ignore_errors: True
 
-    - name: Run Ansible GCE maintenance alerts playbook
+    # - name: Run Ansible GCE maintenance alerts playbook
+    #   command:
+    #     ansible {{ gce_alerts_path }}/build/provision.yml -i {{  }}/build/inventories/{{ vm_environment }}
+    #   ignore_errors: True
+
+    - name: Template config.ini file
+      template:
+        src: '{{ local_dir_application }}/build/group_vars/templates/config.ini.j2'
+        dest: '{{ gce_alerts_path }}/config.ini'
+
+    - name: Copy gce-maintenance-alerts.service file for Systemd
+      # sudo cp {{ gce_alerts_path }}/build/files/gce-maintenance-alerts.service /etc/systemd/system
+      copy:
+        src: '{{ local_dir_application }}/build/files/gce-maintenance-alerts.service'
+        dest: /etc/systemd/system
+        # remote_src: True
+
+    - name: Reload Systemd daemon
       command:
-        ansible {{ gce_alerts_path }}/build/provision.yml -i {{  }}/build/inventories/{{ vm_environment }}
-      ignore_errors: True
+        systemctl daemon-reload
+
+    - name: Enable and start gce-maintenance-alerts.service file with Systemd
+      # sudo systemctl enable gce-maintenance-alerts.service
+      service:
+        name: gce-maintenance-alerts
+        state: started
+        enabled: True
+
+    - name: Restart gce-maintenance-alerts service with Systemd
+      # sudo systemctl enable gce-maintenance-alerts.service
+      service:
+        name: gce-maintenance-alerts
+        state: restarted
