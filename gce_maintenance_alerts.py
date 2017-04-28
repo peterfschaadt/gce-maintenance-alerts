@@ -19,7 +19,7 @@ DISABLE_ALERTS = False
 FAKE_MIGRATION = False
 
 # Enable to disable all logs
-DISABLE_LOGGING == True
+DISABLE_LOGGING = True
 
 
 class GCEMaintenanceAlerts():
