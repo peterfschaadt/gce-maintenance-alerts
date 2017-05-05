@@ -8,7 +8,7 @@ LABEL version='1.1.0' \
 # GitHub: https://github.com/ansible/ansible/releases
 
 ENV ANSIBLE_STABLE=1.9.6
-ENV ANSIBLE_DEV=2.2.2.0
+ENV ANSIBLE_DEV=2.3.0.0
 
 ENV ANSIBLE_VERSION=${ANSIBLE_STABLE}
 
@@ -76,7 +76,6 @@ RUN ansible-playbook provision_alerts.yml \
   -i inventories/${BUILD_ENV:-build} \
   --vault-password-file vault_pass_${BUILD_ENV:-build}.txt \
   -e "docker_build=true" \
-  --become \
   -vvvv
 
 # | tee /build/provision_alerts-log.txt
