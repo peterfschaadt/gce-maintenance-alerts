@@ -89,7 +89,7 @@
       command:
         systemctl daemon-reload
 
-    - name: Enable and start gce-maintenance-alerts.service file with Systemd
+    - name: Enable and start gce-maintenance-alerts.service with Systemd
       # sudo systemctl enable gce-maintenance-alerts.service
       service:
         name: gce-maintenance-alerts
@@ -97,7 +97,7 @@
         enabled: True
 
     - name: Restart gce-maintenance-alerts service with Systemd
-      # sudo systemctl enable gce-maintenance-alerts.service
+      # sudo systemctl restart gce-maintenance-alerts.service
       service:
         name: gce-maintenance-alerts
         state: restarted
